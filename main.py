@@ -18,7 +18,8 @@ def parse_args():
                         help='Password to access authentication endpoint')
     parser.add_argument('-m', '--match-endpoint', type=str, required=True,
                         help='URL of endpoint of match statistics')
-    parser.add_argument('-d', '--mongodb-uri', type=str, required=True,
+    parser.add_argument('-d', '--mongodb-uri', type=str, nargs='?',
+                        default='mongodb://mongo:27017/',
                         help='URI of mongodb host')
     parser.add_argument('-c', '--calendar-path', type=str, nargs='?',
                         default='data/calendar.json',

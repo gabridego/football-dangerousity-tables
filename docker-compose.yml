@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  python:
+    build: .
+    command: [ "-a", "https://football-quality.mathandsport.com/api/auth/", "-u", "username", "-p", "password", "-m", "https://football-quality.mathandsport.com/api/live/{id}/team/tactical/" ]
+    depends_on:
+      - mongo
