@@ -1,11 +1,17 @@
 ## Run script
 
+### Run mongo
+
 ```
-python3 main.py -a https://url/to/auth/api -u username -p password -m https://url/to/match/{id}/api
+docker run -itd -p 27017:27017 --name db mongo
 ```
 
 ```
-usage: main.py [-h] -a AUTH_ENDPOINT -u AUTH_USERNAME -p AUTH_PASSWORD -m MATCH_ENDPOINT [-c [CALENDAR_PATH]] [-o [HOME_OUTPUT_PATH]] [-w [AWAY_OUTPUT_PATH]]
+python3 main.py -a https://url/to/auth/api -u username -p password -m https://url/to/match/{id}/api -d mongodb://localhost:27017/
+```
+
+```
+usage: main.py [-h] -a AUTH_ENDPOINT -u AUTH_USERNAME -p AUTH_PASSWORD -m MATCH_ENDPOINT -d MONGODB_URI [-c [CALENDAR_PATH]] [-o [HOME_OUTPUT_PATH]] [-w [AWAY_OUTPUT_PATH]]
 
 Team dangerousity collector
 
@@ -19,6 +25,8 @@ optional arguments:
                         Password to access authentication endpoint
   -m MATCH_ENDPOINT, --match-endpoint MATCH_ENDPOINT
                         URL of endpoint of match statistics
+  -d MONGODB_URI, --mongodb-uri MONGODB_URI
+                        URI of mongodb host
   -c [CALENDAR_PATH], --calendar-path [CALENDAR_PATH]
                         Path to JSON file containing match information
   -o [HOME_OUTPUT_PATH], --home-output-path [HOME_OUTPUT_PATH]
@@ -30,19 +38,19 @@ optional arguments:
 ## Run container
 
 ```
-sudo docker build -t mathsport:latest .
-sudo docker run -it mathsport -a https://url/to/auth/api -u username -p password -m https://url/to/match/{id}/api
+docker build -t mathsport:latest .
+docker run -it mathsport -a https://url/to/auth/api -u username -p password -m https://url/to/match/{id}/api
 ```
 
 Get container id:
 
 ```
-sudo docker ps -a
+docker ps -a
 ```
 
 Copy files to host:
 
 ```
-sudo docker cp <container_id>:/usr/src/app/out/home_dangerousity.csv .
-sudo docker cp <container_id>:/usr/src/app/out/away_dangerousity.csv .
+docker cp <container_id>:/usr/src/app/out/home_dangerousity.csv .
+docker cp <container_id>:/usr/src/app/out/away_dangerousity.csv .
 ```

@@ -1,8 +1,11 @@
+import os
 import requests
 import json
 from argparse import ArgumentParser
 
 import pandas as pd
+from tqdm import trange
+import pymongo
 
 
 def parse_args():
@@ -15,6 +18,8 @@ def parse_args():
                         help='Password to access authentication endpoint')
     parser.add_argument('-m', '--match-endpoint', type=str, required=True,
                         help='URL of endpoint of match statistics')
+    parser.add_argument('-d', '--mongodb-uri', type=str, required=True,
+                        help='URI of mongodb host')
     parser.add_argument('-c', '--calendar-path', type=str, nargs='?',
                         default='data/calendar.json',
                         help='Path to JSON file containing match information')
@@ -71,12 +76,22 @@ def main(args):
                                  json={"username": args.auth_username,
                                        "password": args.auth_password}).json()['access_token']
     
+    # create output directory, if not existing
+    out_path = os.path.dirname(args.home_output_path)
+    os.makedirs(out_path, exist_ok=True)
+    out_path = os.path.dirname(args.away_output_path)
+    os.makedirs(out_path, exist_ok=True)
+    
+    # connect to mongodb
+    client = pymongo.MongoClient(args.mongodb_uri)
+    db = client["tactical"]
+    
     # initialize tables
     home_dang_df = pd.DataFrame(index=teams, columns=teams)
     away_dang_df = pd.DataFrame(index=teams, columns=teams)
     
-    for i in range(len(teams) - 1):
-        for j in range(i + 1, len(teams)):
+    for i in trange(len(teams) - 1, desc="home team"):
+        for j in trange(i + 1, len(teams), desc="away team", leave=False):
             # home matches
             home_team, away_team = teams[i], teams[j]
 
@@ -84,16 +99,21 @@ def main(args):
             home_match_id = match_ids[f"{home_team},{away_team}"]
             data = requests.get(args.match_endpoint.format(id=home_match_id),
                                 headers={'Authorization': f'Bearer {access_token}'},
-                                params={'agg': 'Yes'}).json()
+                                params={'agg': 'Yes'}).json()['team']['tactical']
 
-            # get entries for maneuvre dangerousity
-            maneuvre_dangerousity = data['team']['tactical']['team_attack_maneuvre_absolute_dangerousity']
+            for k in data.keys():
+                # store in data in collection
+                if len(data[k]) > 0:
+                    db[k].insert_many(data[k])
 
-            # store dangerousity of home and away teams (in the two tables)
-            home_dang_df.at[home_team, away_team] = get_dangerousity_value(maneuvre_dangerousity,
-                                                                           teams_ids[home_team])
-            away_dang_df.at[away_team, home_team] = get_dangerousity_value(maneuvre_dangerousity,
-                                                                           teams_ids[away_team])
+                if k == 'team_attack_maneuvre_absolute_dangerousity':
+                    # get entries for maneuvre dangerousity
+                    maneuvre_dangerousity = data[k]
+                    # store dangerousity of home and away teams (in the two tables)
+                    home_dang_df.at[home_team, away_team] = get_dangerousity_value(maneuvre_dangerousity,
+                                                                                   teams_ids[home_team])
+                    away_dang_df.at[away_team, home_team] = get_dangerousity_value(maneuvre_dangerousity,
+                                                                                   teams_ids[away_team])
 
             # same but for away matches
             home_team, away_team = teams[j], teams[i]
@@ -101,14 +121,21 @@ def main(args):
             away_match_id = match_ids[f"{home_team},{away_team}"]
             data = requests.get(args.match_endpoint.format(id=away_match_id),
                                 headers={'Authorization': f'Bearer {access_token}'},
-                                params={'agg': 'Yes'}).json()
+                                params={'agg': 'Yes'}).json()['team']['tactical']
 
-            maneuvre_dangerousity = data['team']['tactical']['team_attack_maneuvre_absolute_dangerousity']
+            for k in data.keys():
+                # store in data in collection
+                if len(data[k]) > 0:
+                    db[k].insert_many(data[k])
 
-            home_dang_df.at[home_team, away_team] = get_dangerousity_value(maneuvre_dangerousity,
-                                                                           teams_ids[home_team])
-            away_dang_df.at[away_team, home_team] = get_dangerousity_value(maneuvre_dangerousity,
-                                                                           teams_ids[away_team])
+                if k == 'team_attack_maneuvre_absolute_dangerousity':
+                    # get entries for maneuvre dangerousity
+                    maneuvre_dangerousity = data[k]
+                    # store dangerousity of home and away teams (in the two tables)
+                    home_dang_df.at[home_team, away_team] = get_dangerousity_value(maneuvre_dangerousity,
+                                                                                   teams_ids[home_team])
+                    away_dang_df.at[away_team, home_team] = get_dangerousity_value(maneuvre_dangerousity,
+                                                                                   teams_ids[away_team])
             
     # save output files
     home_dang_df.to_csv(args.home_output_path)
