@@ -8,6 +8,6 @@ services:
 
   python:
     build: .
-    command: [ "-a", "https://football-quality.mathandsport.com/api/auth/", "-u", "username", "-p", "password", "-m", "https://football-quality.mathandsport.com/api/live/{id}/team/tactical/" ]
+    command: [ "-a", "https://url/to/auth/api", "-u", "username", "-p", "password", "-m", "https://url/to/match/{id}/api" ]
     depends_on:
       - mongo

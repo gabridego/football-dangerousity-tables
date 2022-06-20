@@ -42,6 +42,9 @@ This repository is organized as follows:
 ├── docker-compose.yml
 ├── Dockerfile
 ├── main.py
+├── out
+│   ├── away_dangerousity.csv
+│   └── home_dangerousity.csv
 ├── README.md
 └── requirements.txt
 ```
@@ -68,7 +71,7 @@ Python requirements are listed in [`requirements.txt`](./requirements.txt) and c
 
 ### Run using `docker compose`
 
-Python command line arguments are hardcoded in [`docker-compose.yml`](./docker-compose.yml). Please update it with your credentials for the authentication API.
+Python command line arguments are hardcoded in [`docker-compose.yml`](./docker-compose.yml). Please update it with the API endpoints and with your credentials for the authentication API.
 
 ```
 docker compose up -d mongo
